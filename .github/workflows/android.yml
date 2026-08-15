@@ -1,0 +1,87 @@
+name: Android CI
+on:
+ workflow_dispatch:
+    inputs:
+      branch:
+        description: '选择构建的分支'
+        required: true
+        default: 'master'
+#on:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+#    paths:
+#     - 'action.on' # 只有 特定 文件的更改才构建
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 允许创建/修改 Release
+      # 如果需要操作 Issues/Pull Requests，可添加：
+     #  issues: write
+      # pull-requests: write
+    steps:
+    - uses: actions/checkout@v6
+      with:
+      
+        # 核心逻辑：直接检出用户指定的分支
+        ref: ${{ github.event.inputs.branch }}
+        fetch-depth: 0
+#      with:
+ #       path: .newjustpiano
+ #     env:
+        # Set the PATH environment variable to include the folder directory
+  #     PATH: $/Arrrknights/:$PATH
+#       PATH: ${{ github.workspace }}/Arrrknights/:$PATH
+  #     PATH: $/Arrrknights:$PATH
+
+    - name: set up JDK 
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+          arguments: assembleDebug
+          build-root-directory: ./newjustpiano
+#    - name: Grant execute permission for gradlew
+ #     run: chmod +x gradlew
+ #     working-directory: ./Arrrknights
+    - name: Build with Gradle
+      run: gradle assembleDebug
+#      working-directory: ./Arrrknights
+ #   - uses: actions/upload-artifact@v4
+ #     with:
+ #       name: my-artifact
+ #       path: '**/*.apk'
+    - name: 更新 Nightly
+      uses: softprops/action-gh-release@v2
+#        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+#      if: github.event_name == 'workflow_dispatch'
+      with:
+          tag_name: build-${{ github.run_number }}
+          name: "Nightly Build#${{ github.run_number }}"
+          prerelease: true
+          overwrite: true
+          body: |
+            ### 构建信息
+            - **安卓壳分支**: `${{ github.event.inputs.branch }}`
+            - **子模块分支**: `easy`
+            - **构建时间**: ${{ github.event.repository.updated_at }}
+            Commit: ${{ github.sha }}
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
+            **/*.apk
+#          tag_name: debug-build-${{ github.run_number }}
+#          name: Debug Build ${{ github.run_number }}
+   #       body: |
+   #         包含构建目录下的所有 APK 文件。
+            
+          draft: true
+    env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
