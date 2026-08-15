@@ -47,12 +47,13 @@ jobs:
       uses: gradle/actions/setup-gradle@v6
       with:
           arguments: assembleDebug
-          build-root-directory: ./newjustpiano
+          build-root-directory:./newjustpiano
 #    - name: Grant execute permission for gradlew
  #     run: chmod +x gradlew
  #     working-directory: ./Arrrknights
     - name: Build with Gradle
       run: gradle assembleDebug
+      working-directory: ./newjustpiano
 #      working-directory: ./Arrrknights
  #   - uses: actions/upload-artifact@v4
  #     with:
